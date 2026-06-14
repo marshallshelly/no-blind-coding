@@ -8,16 +8,21 @@
  * the server's `instructions`.
  */
 
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { Engine } from "./engine/index.js";
 import { SERVER_INSTRUCTIONS } from "./engine/persona.js";
 
+const { version } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { version: string };
+
 const engine = new Engine();
 
 const server = new McpServer(
-  { name: "no-blind-coding", version: "0.1.0" },
+  { name: "no-blind-coding", version },
   { instructions: SERVER_INSTRUCTIONS },
 );
 
@@ -45,7 +50,23 @@ function run(fn: () => unknown): ToolResult {
   }
 }
 
+/** Drop undefined-valued keys — exactOptionalPropertyTypes wants them omitted. */
+function compact<T extends object>(obj: T): { [K in keyof T]?: Exclude<T[K], undefined> } {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as {
+    [K in keyof T]?: Exclude<T[K], undefined>;
+  };
+}
+
 const sectionSchema = z.enum(["frontend", "backend", "general"]);
+
+const stepSchema = z.object({
+  title: z.string().describe("Short name for the step."),
+  instruction: z
+    .string()
+    .describe("Plain-English description of the one piece of logic to write. No code."),
+  section: sectionSchema.optional(),
+  targetFile: z.string().optional().describe("File this step's logic will live in, if known."),
+});
 
 server.registerTool(
   "create_plan",
@@ -55,21 +76,7 @@ server.registerTool(
       "Break the developer's goal into ordered, bite-size steps and persist them. You author the steps; this activates the first one. Each step's instruction is plain English describing ONE piece of logic — never code.",
     inputSchema: {
       goal: z.string().describe("The overall task the developer wants to accomplish."),
-      steps: z
-        .array(
-          z.object({
-            title: z.string().describe("Short name for the step."),
-            instruction: z
-              .string()
-              .describe("Plain-English description of the one piece of logic to write. No code."),
-            section: sectionSchema.optional(),
-            targetFile: z
-              .string()
-              .optional()
-              .describe("File this step's logic will live in, if known."),
-          }),
-        )
-        .min(1),
+      steps: z.array(stepSchema).min(1),
     },
   },
   async ({ goal, steps }) => run(() => engine.createPlan(goal, steps)),
@@ -151,13 +158,73 @@ server.registerTool(
       stepId: z.string().optional().describe("Delegate a single step. Defaults to the current step."),
     },
   },
-  async ({ section, stepId }) =>
-    run(() =>
-      engine.handoff({
-        ...(section !== undefined ? { section } : {}),
-        ...(stepId !== undefined ? { stepId } : {}),
-      }),
-    ),
+  async ({ section, stepId }) => run(() => engine.handoff(compact({ section, stepId }))),
+);
+
+server.registerTool(
+  "add_steps",
+  {
+    title: "Add steps to the plan",
+    description:
+      "Adapt the plan as you learn more about the task. Appends steps, or inserts them after a given step. Use this instead of recreating the plan, so completed work is preserved.",
+    inputSchema: {
+      steps: z.array(stepSchema).min(1),
+      afterStepId: z
+        .string()
+        .optional()
+        .describe("Insert the new steps right after this step. Omit to append at the end."),
+    },
+  },
+  async ({ steps, afterStepId }) => run(() => engine.addSteps(steps, compact({ afterStepId }))),
+);
+
+server.registerTool(
+  "revise_step",
+  {
+    title: "Revise a step",
+    description:
+      "Edit a step that isn't completed yet — clarify the instruction, rename it, change its section or target file. Use when the original framing turned out to be off.",
+    inputSchema: {
+      stepId: z.string().describe("Id of the step to revise."),
+      title: z.string().optional(),
+      instruction: z.string().optional(),
+      section: sectionSchema.optional(),
+      targetFile: z.string().optional(),
+    },
+  },
+  async ({ stepId, title, instruction, section, targetFile }) =>
+    run(() => engine.reviseStep(stepId, compact({ title, instruction, section, targetFile }))),
+);
+
+server.registerTool(
+  "skip_step",
+  {
+    title: "Skip a step",
+    description:
+      "Mark a step skipped (defaults to the current step) and advance. Use when a step turns out to be unnecessary or the developer already had it covered.",
+    inputSchema: {
+      stepId: z.string().optional().describe("Step to skip. Defaults to the current step."),
+      reason: z.string().optional().describe("Why it's being skipped."),
+    },
+  },
+  async ({ stepId, reason }) => run(() => engine.skipStep(stepId, reason)),
+);
+
+server.registerTool(
+  "reset_session",
+  {
+    title: "Reset the session",
+    description:
+      "Archive the current plan and clear it so a new goal can start fresh. The archived plan is kept under .nbc/archive. Requires explicit confirmation.",
+    inputSchema: {
+      confirm: z.boolean().describe("Must be true — guards against accidental resets."),
+    },
+  },
+  async ({ confirm }) =>
+    run(() => {
+      if (!confirm) throw new Error("Pass confirm: true to reset the session.");
+      return engine.resetSession();
+    }),
 );
 
 server.registerTool(

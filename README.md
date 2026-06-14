@@ -54,9 +54,10 @@ submit_for_review  it reads exactly what you wrote
 approve / changes  pass and advance, or teach (not solve) and retry
 ```
 
-Two rules keep it honest:
+Three rules keep it honest:
 
 - **The gate.** It only moves to the next step after _your_ code passes review. Progress is bound to your keystrokes, not the model's.
+- **It adapts.** The first plan is a hypothesis. As the work reveals itself the mentor adds, reframes, or skips steps — and reviews the _diff_ of what you wrote, not the whole file. Hints escalate with your attempts: a nudge first, a worked example only when you're truly stuck.
 - **The escape hatch.** Hate frontend? `handoff` that section and the AI writes it — then explains what it did, so you still learn something.
 
 ## Install
@@ -116,7 +117,11 @@ Existing files are updated in place between markers — your content is preserve
 | `submit_for_review` | Read what you wrote and weigh it against a rubric.       |
 | `approve_step`      | The gate — advance only after your code is right.        |
 | `request_changes`   | Specific, kind feedback that teaches instead of solving. |
+| `add_steps`         | Extend the plan as the work reveals itself.              |
+| `revise_step`       | Reframe a step that wasn't quite right.                  |
+| `skip_step`         | Drop a step that turned out unnecessary.                 |
 | `handoff`           | Delegate a section or step to the AI, on demand.         |
+| `reset_session`     | Archive the plan and start a fresh goal.                 |
 | `session_status`    | Goal, progress, current step, handoffs, full plan.       |
 
 ## Configuration

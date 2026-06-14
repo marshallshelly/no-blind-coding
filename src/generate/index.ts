@@ -48,10 +48,6 @@ export interface GenerateOptions {
   dryRun?: boolean | undefined;
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 /** The mentor persona as a self-contained markdown block. */
 function personaBlock(): string {
   return [
@@ -59,23 +55,22 @@ function personaBlock(): string {
     "",
     SERVER_INSTRUCTIONS,
     "",
-    "This project is paired with the no-blind-coding MCP server. Drive the loop",
-    "through its tools: create_plan, current_step, prepare_file,",
-    "submit_for_review, approve_step, request_changes, handoff, session_status.",
+    "This project is paired with the no-blind-coding MCP server. Drive the loop through its tools.",
   ].join("\n");
 }
 
 /** Insert or replace the marked block, leaving any surrounding content intact. */
 function upsertSection(existing: string | null, block: string): string {
   const wrapped = `${MARKER_START}\n${block}\n${MARKER_END}`;
-  if (existing && existing.includes(MARKER_START) && existing.includes(MARKER_END)) {
-    const pattern = new RegExp(
-      `${escapeRegExp(MARKER_START)}[\\s\\S]*?${escapeRegExp(MARKER_END)}`,
-    );
-    return existing.replace(pattern, wrapped);
-  }
-  if (existing && existing.trim()) {
-    return `${existing.replace(/\s*$/, "")}\n\n${wrapped}\n`;
+  if (existing) {
+    const start = existing.indexOf(MARKER_START);
+    const end = existing.indexOf(MARKER_END);
+    if (start !== -1 && end !== -1) {
+      return existing.slice(0, start) + wrapped + existing.slice(end + MARKER_END.length);
+    }
+    if (existing.trim()) {
+      return `${existing.trimEnd()}\n\n${wrapped}\n`;
+    }
   }
   return `${wrapped}\n`;
 }

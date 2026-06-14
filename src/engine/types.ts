@@ -21,7 +21,8 @@ export type StepStatus =
   | "awaiting_code"
   | "under_review"
   | "done"
-  | "handed_off";
+  | "handed_off"
+  | "skipped";
 
 export interface Step {
   id: string;
@@ -35,6 +36,11 @@ export interface Step {
   reviewNotes: string[];
   /** How many times the developer has submitted this step for review. */
   attempts: number;
+  /**
+   * File contents captured when the step's file was prepared, so review can
+   * diff what the developer wrote against what was already there.
+   */
+  baseline?: string;
 }
 
 export interface Session {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
@@ -136,5 +136,75 @@ describe("Engine", () => {
     const reopened = new Engine(root);
     assert.equal(reopened.currentStep()?.id, "step-2");
     assert.equal(reopened.status().done, 1);
+  });
+
+  it("reviews a diff of what the developer added when the file pre-existed", () => {
+    engine.createPlan("Add login", plan);
+    writeFileSync(join(root, "auth.js"), "export const a = 1;\n");
+    engine.prepareFile("auth.js");
+    writeFileSync(join(root, "auth.js"), "export const a = 1;\nexport const b = 2;\n");
+    const review = engine.submitForReview();
+    assert.ok(review.diff, "expected a diff");
+    assert.match(review.diff!, /\+export const b = 2;/);
+    assert.match(review.rubric, /diff vs the file before/);
+  });
+
+  it("escalates the hint in the rubric as attempts grow", () => {
+    engine.createPlan("Add login", plan);
+    engine.prepareFile("auth.js");
+    writeFileSync(join(root, "auth.js"), "x\n");
+    assert.match(engine.submitForReview().rubric, /first attempt/);
+    engine.requestChanges("try again");
+    assert.match(engine.submitForReview().rubric, /revised once/);
+    engine.requestChanges("again");
+    assert.match(engine.submitForReview().rubric, /stuck/);
+  });
+
+  it("adds steps to a running plan with unique ids", () => {
+    engine.createPlan("Add login", plan);
+    const result = engine.addSteps([
+      { title: "Hash password", instruction: "Write the hash fn", section: "backend" },
+    ]);
+    assert.equal(result.added.length, 1);
+    assert.equal(engine.status().total, 3);
+    const ids = engine.status().steps.map((s) => s.id);
+    assert.equal(new Set(ids).size, ids.length);
+  });
+
+  it("inserts steps after a given step", () => {
+    engine.createPlan("Add login", plan); // step-1, step-2
+    engine.addSteps([{ title: "Middle", instruction: "in between" }], { afterStepId: "step-1" });
+    assert.deepEqual(engine.status().steps.map((s) => s.title), ["Validate email", "Middle", "Login form"]);
+  });
+
+  it("re-activates a completed plan when new steps are added", () => {
+    engine.createPlan("Tiny", [{ title: "Only", instruction: "do it" }]);
+    engine.approveStep();
+    assert.equal(engine.currentStep(), null);
+    const result = engine.addSteps([{ title: "More", instruction: "keep going" }]);
+    assert.equal(result.current?.title, "More");
+  });
+
+  it("revises a not-done step and refuses a done one", () => {
+    engine.createPlan("Add login", plan);
+    const { step } = engine.reviseStep("step-1", { instruction: "rewritten" });
+    assert.equal(step.instruction, "rewritten");
+    engine.approveStep();
+    assert.throws(() => engine.reviseStep("step-1", { title: "x" }), /completed/);
+  });
+
+  it("skips the current step and advances", () => {
+    engine.createPlan("Add login", plan);
+    const result = engine.skipStep(undefined, "already covered");
+    assert.equal(result.skipped.status, "skipped");
+    assert.equal(result.next?.id, "step-2");
+    assert.equal(engine.currentStep()?.id, "step-2");
+  });
+
+  it("resets and archives the session", () => {
+    engine.createPlan("Add login", plan);
+    const { archived } = engine.resetSession();
+    assert.ok(existsSync(archived));
+    assert.throws(() => engine.currentStep(), /No active session/);
   });
 });
