@@ -1,6 +1,6 @@
 {
   "name": "no-blind-coding",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turns your AI agent into the senior who won't touch your keyboard. You write every line — and actually understand the code you ship.",
   "main": "dist/engine/index.js",
   "bin": {
