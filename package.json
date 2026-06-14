@@ -1,0 +1,60 @@
+{
+  "name": "no-blind-coding",
+  "version": "0.0.0",
+  "description": "Turns your AI agent into the senior who won't touch your keyboard. You write every line — and actually understand the code you ship.",
+  "main": "dist/engine/index.js",
+  "bin": {
+    "no-blind-coding": "dist/server.js",
+    "no-blind-coding-init": "dist/generate/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm run build && changeset publish",
+    "prepublishOnly": "pnpm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mentor",
+    "learning",
+    "code-review",
+    "ai",
+    "pair-programming",
+    "claude-code",
+    "cursor",
+    "developer-education"
+  ],
+  "author": "Marshall Shelly",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marshallshelly/no-blind-coding.git"
+  },
+  "homepage": "https://github.com/marshallshelly/no-blind-coding#readme",
+  "bugs": "https://github.com/marshallshelly/no-blind-coding/issues",
+  "packageManager": "pnpm@11.6.0",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.0",
+    "@types/node": "^25.9.3",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

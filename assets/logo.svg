@@ -1,0 +1,15 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No-Blind-Coding">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d1d27"/>
+      <stop offset="1" stop-color="#111118"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="208" height="208" rx="46" fill="url(#bg)" stroke="#2c2c3a" stroke-width="2"/>
+  <!-- a plan, broken into ascending steps -->
+  <rect x="64" y="150" width="52" height="15" rx="7.5" fill="#4a4a58"/>
+  <rect x="64" y="120" width="80" height="15" rx="7.5" fill="#73738a"/>
+  <rect x="64" y="90" width="104" height="15" rx="7.5" fill="#f4b740"/>
+  <!-- the cursor on the step you're writing -->
+  <rect x="176" y="86" width="9" height="23" rx="2.5" fill="#f4b740"/>
+</svg>

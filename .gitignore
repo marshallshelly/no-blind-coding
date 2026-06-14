@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tmp
+
+# Per-project learning state created by the engine at runtime
+.nbc/
