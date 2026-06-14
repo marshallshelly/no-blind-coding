@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "pnpm run build && pnpm publish --no-git-checks --access public",
+    "release": "pnpm run build && changeset publish",
     "prepublishOnly": "pnpm run build"
   },
   "publishConfig": {
