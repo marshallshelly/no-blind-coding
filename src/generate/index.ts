@@ -30,6 +30,7 @@ export const TARGETS: readonly Target[] = [
   { id: "zed", label: "Zed", file: ".rules", format: "section" },
   { id: "codex", label: "Codex", file: "AGENTS.md", format: "section" },
   { id: "antigravity", label: "Antigravity", file: "AGENTS.md", format: "section" },
+  { id: "trae", label: "Trae", file: ".trae/rules/project_rules.md", format: "section" },
 ];
 
 const MARKER_START = "<!-- no-blind-coding:start -->";

@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/no-blind-coding?style=flat-square&color=15151c&label=npm" alt="npm version">
   <img src="https://img.shields.io/github/stars/marshallshelly/no-blind-coding?style=flat-square&color=15151c&label=stars" alt="Stars">
-  <img src="https://img.shields.io/badge/works%20with-7%20editors-15151c?style=flat-square" alt="Works with 7 editors">
+  <img src="https://img.shields.io/badge/works%20with-8%20editors-15151c?style=flat-square" alt="Works with 8 editors">
   <img src="https://img.shields.io/badge/license-MIT-15151c?style=flat-square" alt="MIT license">
 </p>
 
@@ -62,7 +62,7 @@ Three rules keep it honest:
 
 ## Install
 
-Works with **7 editors**. Pick your setup; the mentor is the same everywhere.
+Works with **8 editors**. Pick your setup; the mentor is the same everywhere.
 
 ### Claude Code
 
@@ -72,7 +72,7 @@ claude mcp add --scope user no-blind-coding -- npx -y no-blind-coding
 
 That's it. Start a session and say _"use no-blind-coding to mentor me through &lt;your task&gt;."_
 
-### Cursor · Claude Desktop · VS Code · Zed · Codex · Antigravity
+### Cursor · Claude Desktop · VS Code · Zed · Codex · Antigravity · Trae
 
 Add the server to the host's MCP config:
 
@@ -104,6 +104,7 @@ npx -p no-blind-coding no-blind-coding-init . --list
 | VS Code (Copilot)   | `.github/copilot-instructions.md`   |
 | Zed                 | `.rules`                            |
 | Codex / Antigravity | `AGENTS.md`                         |
+| Trae                | `.trae/rules/project_rules.md`      |
 
 Existing files are updated in place between markers — your content is preserved, and re-running is idempotent. (Claude Desktop has no rules file; it leans on the server's instructions.)
 
