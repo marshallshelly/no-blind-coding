@@ -1,5 +1,15 @@
 # no-blind-coding
 
+## 0.3.0
+
+### Minor Changes
+
+- d08cd3d: Add Trae to `no-blind-coding-init` — generates `.trae/rules/project_rules.md`. (The MCP server already worked in Trae via `.trae/mcp.json`; this adds the native rules file.)
+
+### Patch Changes
+
+- d08cd3d: Review rubric now tells the host to apply the project's conventions and any active editor rules/skills (semantic HTML, framework idioms), and treats accessibility, semantic correctness, and security as non-negotiable — flagged even on a first pass.
+
 ## 0.2.0
 
 ### Minor Changes
