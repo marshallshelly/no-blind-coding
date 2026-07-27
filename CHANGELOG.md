@@ -1,5 +1,11 @@
 # no-blind-coding
 
+## 0.3.1
+
+### Patch Changes
+
+- 0cd5a5a: Persona now tells the host to treat the developer as a collaborator: welcome pushback, adopt a better approach or correction via `revise_step` when the developer is right, explain disagreements instead of overruling, and trust the developer on current APIs/versions over its own training cutoff.
+
 ## 0.3.0
 
 ### Minor Changes
