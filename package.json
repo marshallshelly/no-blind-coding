@@ -16,6 +16,7 @@
     "start": "node dist/server.js",
     "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit",
+    "prepare": "pnpm run build",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm run build && changeset publish",
