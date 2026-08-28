@@ -12,7 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { archiveSession, projectRoot, loadSession, resolveInRoot, saveSession } from "./store.js";
 import { buildReviewRubric } from "./rubric.js";
 import { lineDiff } from "./diff.js";
-import type { Section, Session, Step } from "./types.js";
+import type { LearningKind, LearningRecord, Mission, Section, Session, Step } from "./types.js";
 
 export interface StepInput {
   title: string;
@@ -61,11 +61,20 @@ export interface HandoffResult {
 
 export interface StatusResult {
   goal: string;
+  mission: Mission | undefined;
   done: number;
   total: number;
   current: Step | null;
   handoffSections: Section[];
   steps: Step[];
+  learningRecords: LearningRecord[];
+}
+
+export interface RecordLearningInput {
+  note: string;
+  kind: LearningKind;
+  /** Id of an earlier record this one revises. */
+  supersedes?: string;
 }
 
 export class Engine {
@@ -108,7 +117,7 @@ export class Engine {
   }
 
   /** Persist an LLM-authored plan and activate the first step. */
-  createPlan(goal: string, steps: StepInput[]): PlanResult {
+  createPlan(goal: string, steps: StepInput[], mission?: Mission): PlanResult {
     if (steps.length === 0) {
       throw new Error("A plan needs at least one step.");
     }
@@ -123,9 +132,41 @@ export class Engine {
       currentStepId: first.id,
       steps: built,
       handoffSections: [],
+      learningRecords: [],
+      ...(mission ? { mission } : {}),
     };
     saveSession(session, this.root);
     return { goal, total: built.length, current: first };
+  }
+
+  /** Set (or replace) the mission that grounds planning and review. */
+  setMission(mission: Mission): { mission: Mission } {
+    const session = this.load();
+    session.mission = mission;
+    this.touch(session);
+    return { mission };
+  }
+
+  /**
+   * Record a durable, decision-grade note about what the developer now knows.
+   * This is the session's memory — it steers the zone of proximal development.
+   */
+  recordLearning(input: RecordLearningInput): { record: LearningRecord } {
+    const session = this.load();
+    const record: LearningRecord = {
+      id: `lr-${session.learningRecords.length + 1}`,
+      createdAt: new Date().toISOString(),
+      kind: input.kind,
+      note: input.note,
+    };
+    if (input.supersedes) {
+      const prior = session.learningRecords.find((r) => r.id === input.supersedes);
+      if (!prior) throw new Error(`No learning record ${input.supersedes} to supersede.`);
+      prior.supersededBy = record.id;
+    }
+    session.learningRecords.push(record);
+    this.touch(session);
+    return { record };
   }
 
   currentStep(): Step | null {
@@ -176,7 +217,10 @@ export class Engine {
       step.baseline !== undefined && step.baseline !== content
         ? lineDiff(step.baseline, content)
         : undefined;
-    const rubric = buildReviewRubric(step, content, diff);
+    const rubric = buildReviewRubric(step, content, diff, {
+      mission: session.mission,
+      learningRecords: session.learningRecords.filter((r) => !r.supersededBy),
+    });
     return diff !== undefined ? { step, content, rubric, diff } : { step, content, rubric };
   }
 
@@ -307,11 +351,13 @@ export class Engine {
     const current = session.steps.find((s) => s.id === session.currentStepId) ?? null;
     return {
       goal: session.goal,
+      mission: session.mission,
       done,
       total: session.steps.length,
       current,
       handoffSections: session.handoffSections,
       steps: session.steps,
+      learningRecords: session.learningRecords,
     };
   }
 }

@@ -43,6 +43,29 @@ export interface Step {
   baseline?: string;
 }
 
+/** Why the developer is doing this — the real-world outcome, not "learn X". */
+export interface Mission {
+  why: string;
+  /** Observable things the developer will be able to do once they're there. */
+  successCriteria: string[];
+}
+
+export type LearningKind =
+  | "demonstrated" // showed real understanding of something non-trivial
+  | "prior-knowledge" // disclosed they already know it
+  | "misconception-corrected" // believed something wrong, now sees why
+  | "mission-shift"; // the goal itself moved as they learned
+
+/** A durable note of what the developer knows — the session's cross-step memory. */
+export interface LearningRecord {
+  id: string;
+  createdAt: string;
+  kind: LearningKind;
+  note: string;
+  /** Set when a later record revises this one. */
+  supersededBy?: string;
+}
+
 export interface Session {
   version: 1;
   goal: string;
@@ -52,4 +75,8 @@ export interface Session {
   steps: Step[];
   /** Sections the developer has blanket-delegated to the AI. */
   handoffSections: Section[];
+  /** Why the developer is doing this — grounds planning and review. */
+  mission?: Mission;
+  /** Cross-step memory of what the developer has demonstrably learned. */
+  learningRecords: LearningRecord[];
 }

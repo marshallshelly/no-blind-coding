@@ -31,33 +31,41 @@ type ToolResult = {
   isError?: boolean;
 };
 
-function ok(payload: unknown): ToolResult {
+const ok = (payload: unknown): ToolResult => {
   const text = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
   return { content: [{ type: "text", text }] };
-}
+};
 
-function fail(error: unknown): ToolResult {
+const fail = (error: unknown): ToolResult => {
   const text = error instanceof Error ? error.message : String(error);
   return { content: [{ type: "text", text }], isError: true };
-}
+};
 
 /** Run an engine call and normalize success/error into a tool result. */
-function run(fn: () => unknown): ToolResult {
+const run = (fn: () => unknown): ToolResult => {
   try {
     return ok(fn());
   } catch (error) {
     return fail(error);
   }
-}
+};
 
 /** Drop undefined-valued keys — exactOptionalPropertyTypes wants them omitted. */
-function compact<T extends object>(obj: T): { [K in keyof T]?: Exclude<T[K], undefined> } {
-  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as {
+const compact = <T extends object>(obj: T): { [K in keyof T]?: Exclude<T[K], undefined> } =>
+  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as {
     [K in keyof T]?: Exclude<T[K], undefined>;
   };
-}
 
 const sectionSchema = z.enum(["frontend", "backend", "general"]);
+
+const missionSchema = z.object({
+  why: z
+    .string()
+    .describe("The concrete real-world outcome the developer is chasing — not 'to understand X'."),
+  successCriteria: z
+    .array(z.string())
+    .describe("Observable things they'll be able to do once they're there."),
+});
 
 const stepSchema = z.object({
   title: z.string().describe("Short name for the step."),
@@ -73,13 +81,53 @@ server.registerTool(
   {
     title: "Create a learning plan",
     description:
-      "Break the developer's goal into ordered, bite-size steps and persist them. You author the steps; this activates the first one. Each step's instruction is plain English describing ONE piece of logic — never code.",
+      "Break the developer's goal into ordered, bite-size steps and persist them. You author the steps; this activates the first one. Each step's instruction is plain English describing ONE piece of logic — never code. Establish the mission first (here or via set_mission) so every step traces back to why they're here.",
     inputSchema: {
       goal: z.string().describe("The overall task the developer wants to accomplish."),
       steps: z.array(stepSchema).min(1),
+      mission: missionSchema.optional().describe("Why the developer is doing this. Grounds planning and review."),
     },
   },
-  async ({ goal, steps }) => run(() => engine.createPlan(goal, steps)),
+  async ({ goal, steps, mission }) => run(() => engine.createPlan(goal, steps, mission)),
+);
+
+server.registerTool(
+  "set_mission",
+  {
+    title: "Set the mission",
+    description:
+      "Capture or update WHY the developer is learning this — the real-world outcome that grounds every step and review. Establish it before planning; update it (and record_learning the shift) when the goal moves.",
+    inputSchema: {
+      why: missionSchema.shape.why,
+      successCriteria: missionSchema.shape.successCriteria,
+    },
+  },
+  async ({ why, successCriteria }) => run(() => engine.setMission({ why, successCriteria })),
+);
+
+server.registerTool(
+  "record_learning",
+  {
+    title: "Record what the developer learned",
+    description:
+      "The session's memory across steps and restarts. Call this when the developer demonstrates real understanding of something non-trivial, discloses prior knowledge, or corrects a misconception — it keeps the next step in their zone of proximal development. Record insight, not activity.",
+    inputSchema: {
+      note: z
+        .string()
+        .describe("What they now understand (or already knew) and why it changes what to teach next."),
+      kind: z
+        .enum(["demonstrated", "prior-knowledge", "misconception-corrected", "mission-shift"])
+        .describe("Why this is worth remembering."),
+      supersedes: z
+        .string()
+        .optional()
+        .describe("Id of an earlier record this one revises (understanding deepened or corrected)."),
+    },
+  },
+  async ({ note, kind, supersedes }) =>
+    run(() =>
+      engine.recordLearning({ note, kind, ...(supersedes !== undefined ? { supersedes } : {}) }),
+    ),
 );
 
 server.registerTool(
