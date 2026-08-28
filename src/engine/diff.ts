@@ -4,7 +4,7 @@
  * annotated form: " " unchanged, "-" removed, "+" added.
  */
 
-export function lineDiff(oldText: string, newText: string): string {
+export const lineDiff = (oldText: string, newText: string): string => {
   const a = oldText.length ? oldText.split("\n") : [];
   const b = newText.length ? newText.split("\n") : [];
   const m = a.length;

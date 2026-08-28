@@ -14,7 +14,7 @@ interface Args {
   dryRun: boolean;
 }
 
-function parseArgs(argv: string[]): Args {
+const parseArgs = (argv: string[]): Args => {
   const args: Args = { destRoot: process.cwd(), list: false, dryRun: false };
   let destSet = false;
   for (let i = 0; i < argv.length; i++) {
@@ -39,16 +39,16 @@ function parseArgs(argv: string[]): Args {
     }
   }
   return args;
-}
+};
 
-function printTargets(): void {
+const printTargets = (): void => {
   console.log("Available targets:");
   for (const target of TARGETS) {
     console.log(`  ${target.id.padEnd(13)} ${target.label.padEnd(20)} → ${target.file}`);
   }
-}
+};
 
-function main(): void {
+const main = (): void => {
   let args: Args;
   try {
     args = parseArgs(process.argv.slice(2));
@@ -77,6 +77,6 @@ function main(): void {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
-}
+};
 
 main();

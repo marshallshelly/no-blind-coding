@@ -201,6 +201,48 @@ describe("Engine", () => {
     assert.equal(engine.currentStep()?.id, "step-2");
   });
 
+  it("grounds review in the mission and what the developer already knows", () => {
+    engine.createPlan("Add login", plan, {
+      why: "Ship the team's auth so I stop blocking releases",
+      successCriteria: ["Users log in", "Passwords are hashed"],
+    });
+    engine.recordLearning({ note: "Comfortable with regex anchors", kind: "prior-knowledge" });
+    engine.prepareFile("auth.js");
+    writeFileSync(join(root, "auth.js"), "x\n");
+    const rubric = engine.submitForReview().rubric;
+    assert.match(rubric, /stop blocking releases/); // mission why
+    assert.match(rubric, /Passwords are hashed/); // success criteria
+    assert.match(rubric, /regex anchors/); // learning record
+    assert.match(rubric, /prior-knowledge/);
+  });
+
+  it("supersedes a learning record and drops it from the rubric", () => {
+    engine.createPlan("Add login", plan);
+    const first = engine.recordLearning({ note: "Thinks == is fine", kind: "demonstrated" });
+    assert.equal(first.record.id, "lr-1");
+    engine.recordLearning({
+      note: "Now uses === after seeing coercion bite",
+      kind: "misconception-corrected",
+      supersedes: "lr-1",
+    });
+    const records = engine.status().learningRecords;
+    assert.equal(records.find((r) => r.id === "lr-1")?.supersededBy, "lr-2");
+
+    engine.prepareFile("auth.js");
+    writeFileSync(join(root, "auth.js"), "x\n");
+    const rubric = engine.submitForReview().rubric;
+    assert.doesNotMatch(rubric, /Thinks == is fine/); // superseded record is hidden
+    assert.match(rubric, /coercion bite/); // live record shown
+  });
+
+  it("rejects superseding a record that doesn't exist", () => {
+    engine.createPlan("Add login", plan);
+    assert.throws(
+      () => engine.recordLearning({ note: "x", kind: "demonstrated", supersedes: "lr-9" }),
+      /No learning record lr-9/,
+    );
+  });
+
   it("resets and archives the session", () => {
     engine.createPlan("Add login", plan);
     const { archived } = engine.resetSession();

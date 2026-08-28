@@ -54,10 +54,11 @@ submit_for_review  it reads exactly what you wrote
 approve / changes  pass and advance, or teach (not solve) and retry
 ```
 
-Three rules keep it honest:
+Four rules keep it honest:
 
 - **The gate.** It only moves to the next step after _your_ code passes review. Progress is bound to your keystrokes, not the model's.
-- **It adapts.** The first plan is a hypothesis. As the work reveals itself the mentor adds, reframes, or skips steps — and reviews the _diff_ of what you wrote, not the whole file. Hints escalate with your attempts: a nudge first, a worked example only when you're truly stuck.
+- **It's grounded.** Before planning, it pins down _why_ you're here — the real outcome, not "learn X" — and every step traces back to that mission. Abstract lessons are what make learning not stick.
+- **It has a memory.** It keeps _learning records_ across steps and restarts: what you've proven you understand, what you already knew, which misconception you corrected. That's how it pitches the next step to your real level instead of re-teaching or overshooting — your zone of proximal development. It reviews the _diff_ of what you wrote, hints escalate with your attempts (a nudge first, a worked example only when you're truly stuck), and it spaces concepts so they move to long-term memory, not just in-the-moment recall.
 - **The escape hatch.** Hate frontend? `handoff` that section and the AI writes it — then explains what it did, so you still learn something.
 
 ## Install
@@ -113,6 +114,8 @@ Existing files are updated in place between markers — your content is preserve
 | Tool                | What it does                                             |
 | ------------------- | -------------------------------------------------------- |
 | `create_plan`       | Break the goal into ordered steps; activate the first.   |
+| `set_mission`       | Capture _why_ you're here — the outcome that grounds every step. |
+| `record_learning`   | Remember what you've proven you understand — steers what's taught next. |
 | `current_step`      | Show the step you're on.                                 |
 | `prepare_file`      | Open the step's file, or tell you to create it.          |
 | `submit_for_review` | Read what you wrote and weigh it against a rubric.       |

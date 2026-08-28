@@ -50,18 +50,17 @@ export interface GenerateOptions {
 }
 
 /** The mentor persona as a self-contained markdown block. */
-function personaBlock(): string {
-  return [
+const personaBlock = (): string =>
+  [
     "# No-Blind-Coding — mentor mode",
     "",
     SERVER_INSTRUCTIONS,
     "",
     "This project is paired with the no-blind-coding MCP server. Drive the loop through its tools.",
   ].join("\n");
-}
 
 /** Insert or replace the marked block, leaving any surrounding content intact. */
-function upsertSection(existing: string | null, block: string): string {
+const upsertSection = (existing: string | null, block: string): string => {
   const wrapped = `${MARKER_START}\n${block}\n${MARKER_END}`;
   if (existing) {
     const start = existing.indexOf(MARKER_START);
@@ -74,11 +73,11 @@ function upsertSection(existing: string | null, block: string): string {
     }
   }
   return `${wrapped}\n`;
-}
+};
 
 /** A dedicated file we own — frontmatter that pins it as always-applied. */
-function renderMdc(block: string): string {
-  return [
+const renderMdc = (block: string): string =>
+  [
     "---",
     "description: No-Blind-Coding mentor mode",
     "alwaysApply: true",
@@ -87,14 +86,13 @@ function renderMdc(block: string): string {
     block,
     "",
   ].join("\n");
-}
 
-function renderFor(format: TargetFormat, existing: string | null): string {
+const renderFor = (format: TargetFormat, existing: string | null): string => {
   const block = personaBlock();
   return format === "mdc" ? renderMdc(block) : upsertSection(existing, block);
-}
+};
 
-export function resolveTargets(only?: string[]): Target[] {
+export const resolveTargets = (only?: string[]): Target[] => {
   if (!only || only.length === 0) return [...TARGETS];
   const known = new Map(TARGETS.map((t) => [t.id, t]));
   const selected: Target[] = [];
@@ -108,9 +106,9 @@ export function resolveTargets(only?: string[]): Target[] {
     selected.push(target);
   }
   return selected;
-}
+};
 
-export function generate(destRoot: string, options: GenerateOptions = {}): GenerateResult[] {
+export const generate = (destRoot: string, options: GenerateOptions = {}): GenerateResult[] => {
   const { only, dryRun = false } = options;
   const targets = resolveTargets(only);
 
@@ -146,4 +144,4 @@ export function generate(destRoot: string, options: GenerateOptions = {}): Gener
   }
 
   return results;
-}
+};
